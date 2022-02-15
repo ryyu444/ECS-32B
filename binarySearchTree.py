@@ -282,7 +282,7 @@ class BinarySearchTree:
     def __setitem__(self, key, value):
         self.put(key, value)
 
-    # Allows us of in operator
+    # Allows use of in operator
     def __contains__(self, key):
         return bool(self._get(key, self.root))  
 
