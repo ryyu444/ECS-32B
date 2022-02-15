@@ -65,6 +65,64 @@ class TreeNode:
         if self.right_child:
             self.right_child.parent = self
 
+    # Finds successor node for the removal of a node w/ two children
+    def find_successor(self):
+        successor = None
+        # If node is a right child, finds min key for right subtree & sets as successor
+        if self.right_child:
+            successor = self.right_child.find_min()
+        else:
+            # If node has is a left child of the parent & has no right child, successor is parent of node
+            if self.parent:
+                if self.is_left_child():
+                    successor = self.parent
+                # Else, node is right child of parent & has no right child --> Successor is successor of parent node
+                else:
+                    self.parent.right_child = None
+                    successor = self.parent.find_successor()
+                    self.parent.right_child = self
+        return successor
+
+    # Finds min key in a subtree
+    def find_min(self):
+        current = self
+        # Goes down the left subtree till it hits the left most leaf node
+        while current.left_child:
+            current = current.left_child
+        return current
+
+    # Goes directly to node we want to splice out & makes changes
+    def splice_out(self):
+        # Checks if node is leaf
+        if self.is_leaf():
+            # Checks if left/right child & sets it as None (Removal)
+            if self.is_left_child():
+                self.parent.left_child = None
+            else:
+                self.parent.right_child = None
+        # Checks if node has a child
+        elif self.has_a_child():
+            # If node is a left child, sets parent of children of the node to be parent of current node
+            if self.left_child:
+                if self.is_left_child():
+                    self.parent.left_child = self.left_child
+                # Else, node is a right child & sets parent of right child of the node to be parent of current node
+                else:
+                    self.parent.right_child = self.left_child
+                # Sets parent of children of current node to be current node's parent
+                self.left_child.parent = self.parent
+            # Else, node is a right child & sets parent of children of the node to be parent of current node
+            else:
+                # If child is a left child, sets current node's parent's left child to be that child
+                if self.is_left_child():
+                    self.parent.left_child = self.right_child
+                # Otherwise, child is right child & sets current node's parent's right child to be that child
+                else:
+                    self.parent.right_child = self.right_child
+                # Sets the current node's children to have their parent be current node's parent
+                self.right_child.parent = self.parent
+
+
 class BinarySearchTree:
     
     def __init__(self):
@@ -144,24 +202,35 @@ class BinarySearchTree:
     
     # Helper function to delete
     def _delete(self, current_node):
-        if current_node.is_leaf():  # removing a leaf
+        # Removing a leaf
+        if current_node.is_leaf():
+            # IF current node is the left child of the parent, left child is removed & set to None
             if current_node == current_node.parent.left_child:
                 current_node.parent.left_child = None
+            # Else, current node is right child of parent & right child is removed & set to None
             else:
                 current_node.parent.right_child = None
-        elif current_node.has_children():  # removing a node with two children
+        # Removing a node with two children
+        elif current_node.has_children():
+            # Finds successor & cuts out key + value to replace w/ node to be deleted
             successor = current_node.find_successor()
             successor.splice_out()
             current_node.key = successor.key
             current_node.value = successor.value
-        else:  # removing a node with one child
+        # Removing a node with one child
+        else:
+            # If current node is a left child, Update parent reference of left child to point to parent of current node
+            # Update left child reference of parent to point to current node’s left child
             if current_node.left_child:
                 if current_node.is_left_child():
                     current_node.left_child.parent = current_node.parent
                     current_node.parent.left_child = current_node.left_child
+            # If current node is a right child, Update parent reference of left child to point to parent of current node
+            # Update right child reference of parent to point to current node’s left child
                 elif current_node.is_right_child():
                     current_node.left_child.parent = current_node.parent
                     current_node.parent.right_child = current_node.left_child
+            # If current node has no parent → Root → Replace key, value, left_child, & right_child by calling replace_value method on root
                 else:
                     current_node.replace_value(
                         current_node.left_child.key,
@@ -169,6 +238,7 @@ class BinarySearchTree:
                         current_node.left_child.left_child,
                         current_node.left_child.right_child,
                     )
+            # Code for current node if it were a RIGHT CHILD
             else:
                 if current_node.is_left_child():
                     current_node.right_child.parent = current_node.parent
